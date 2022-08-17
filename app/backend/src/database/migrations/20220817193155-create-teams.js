@@ -14,18 +14,6 @@ module.exports = {
         type: Sequelize.STRING,
         field: 'team_name',
       },
-      createdAt: {
-        field: 'created_at',
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-      updatedAt: {
-        field: 'updated_at',
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      }
     })
   },
 

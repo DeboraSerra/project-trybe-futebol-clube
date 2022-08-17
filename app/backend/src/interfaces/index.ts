@@ -27,6 +27,15 @@ export interface ITeam {
   teamName: string;
 }
 
+export interface IMatchComplete extends IMatch {
+  teamHome: {
+    teamName: string;
+  };
+  teamAway: {
+    teamName: string;
+  };
+}
+
 export interface IMatch extends IPoints {
   homeTeam: number;
   awayTeam: number;

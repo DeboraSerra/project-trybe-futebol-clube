@@ -1,4 +1,4 @@
-import { Model, STRING, INTEGER, DATE } from 'sequelize';
+import { Model, STRING, INTEGER } from 'sequelize';
 import db from '.';
 
 class Team extends Model {
@@ -18,19 +18,10 @@ Team.init({
     allowNull: false,
     field: 'team_name',
   },
-  createdAt: {
-    type: DATE,
-    allowNull: false,
-    field: 'created_at',
-  },
-  updatedAt: {
-    type: DATE,
-    allowNull: false,
-    field: 'updated_at',
-  },
 }, {
   sequelize: db,
   modelName: 'teams',
+  timestamps: false,
 });
 
 export default Team;
