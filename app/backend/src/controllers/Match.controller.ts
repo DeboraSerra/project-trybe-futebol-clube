@@ -3,6 +3,11 @@ import MatchService from '../service/Match.service';
 
 class MatchController {
   static async getAll(req: Request, res: Response) {
+    const { inProgress } = req.query;
+    if (inProgress !== undefined) {
+      const matches = await MatchService.getByProgress(inProgress === 'true');
+      return res.status(200).json(matches);
+    }
     const matches = await MatchService.getAll();
     res.status(200).json(matches);
   }
@@ -11,12 +16,6 @@ class MatchController {
     const { id } = req.params;
     const match = await MatchService.getOne(+id);
     res.status(200).json(match);
-  }
-
-  static async getByProgress(req: Request, res: Response) {
-    const { inProgress } = req.query;
-    const matches = await MatchService.getByProgress(inProgress === 'true');
-    res.status(200).json(matches);
   }
 
   static async finishMatch(req: Request, res: Response) {

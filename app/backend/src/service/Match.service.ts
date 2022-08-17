@@ -4,24 +4,58 @@ import ErrorCode from '../CodeError';
 import Match from '../database/models/Match.model';
 
 class MatchService {
+  static async getTeamNames(match: IMatchIndProg) {
+    const { homeTeam, awayTeam, inProgress } = match;
+    const hTeamName = await Team.findOne({ where: { id: homeTeam }, attributes: ['teamName'] })
+      .then((res) => res?.teamName);
+    const aTeamName = await Team.findOne({ where: { id: awayTeam }, attributes: ['teamName'] })
+      .then((res) => res?.teamName);
+    return { ...match,
+      inProgress: !!inProgress,
+      teamHome: { teamName: hTeamName },
+      teamAway: { teamName: aTeamName } };
+  }
+
   static async getAll() {
-    const response = await Match.findAll();
+    const matches = await Match.findAll({ raw: true,
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+      },
+    });
+    const response = await Promise.all(matches.map(MatchService.getTeamNames));
     return response;
   }
 
   static async getOne(id: number) {
-    const response = await Match.findOne({ where: { id } });
-    if (!response) {
+    const match = await Match.findOne({ where: { id },
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+      } });
+    if (!match) {
       throw new ErrorCode('Match not found', 404);
     }
+    const { homeTeam, awayTeam } = match;
+    const hTeamName = await Team.findOne({ where: { id: homeTeam }, attributes: ['teamName'] })
+      .then((res) => res?.teamName);
+    const aTeamName = await Team.findOne({ where: { id: awayTeam }, attributes: ['teamName'] })
+      .then((res) => res?.teamName);
+    const response = { ...match,
+      teamHome: { teamName: hTeamName },
+      teamAway: { teamName: aTeamName } };
     return response;
   }
 
   static async getByProgress(progress: boolean) {
-    const response = await Match.findAll({ where: { inProgress: progress } });
-    if (!response) {
+    const matches = await Match.findAll({ where: { inProgress: progress },
+      raw: true,
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+      },
+    });
+    if (!matches) {
       throw new ErrorCode('No matches found', 404);
     }
+    const response = await Promise.all(matches.map(MatchService.getTeamNames));
     return response;
   }
 
@@ -46,7 +80,7 @@ class MatchService {
       homeTeamGoals,
       awayTeamGoals,
       inProgress: true,
-    });
+    }, { raw: true, attributes: { exclude: ['createdAt', 'updatedAt'] } });
     return response;
   }
 

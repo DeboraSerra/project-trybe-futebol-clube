@@ -8,9 +8,6 @@ router.route('/')
   .get(MatchController.getAll)
   .post(tokenMiddleware, MatchController.createMatch);
 
-router.route('?')
-  .get(MatchController.getByProgress);
-
 router.route('/:id/finish')
   .patch(MatchController.finishMatch);
 
