@@ -4,6 +4,7 @@ import 'express-async-errors';
 import ErrorMid from './middlewares/error.middleware';
 import LoginRoute from './routes/Login.route';
 import TeamRoute from './routes/Team.route';
+import MatchRoute from './routes/Match.route';
 
 class App {
   public app: express.Express;
@@ -32,6 +33,7 @@ class App {
 
   public start(PORT: string | number):void {
     this.app.use('/login', LoginRoute);
+    this.app.use('/matches', MatchRoute);
     this.app.use('/teams', TeamRoute);
     this.app.use(ErrorMid);
     this.app.listen(PORT, () => console.log(`Running on port ${PORT}`));

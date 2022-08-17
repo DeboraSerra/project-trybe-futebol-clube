@@ -26,3 +26,23 @@ export interface ITeam {
   id: number;
   teamName: string;
 }
+
+export interface IMatch extends IPoints {
+  homeTeam: number;
+  awayTeam: number;
+}
+
+export interface IMatchInd extends IMatch {
+  id: number;
+}
+
+export interface IMatchProg extends IMatch {
+  inProgress: boolean;
+}
+
+export interface IPoints {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+}
+
+export interface IMatchIndProg extends IMatchInd, IMatchProg { }
