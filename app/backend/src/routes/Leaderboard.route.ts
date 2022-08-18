@@ -4,7 +4,7 @@ import LeaderboardController from '../controllers/Leaderboard.controller';
 const router = Router();
 
 router.route('/')
-  .get(LeaderboardController.getTeams);
+  .get(LeaderboardController.getTeamsGeneral);
 
 router.route('/:type')
   .get(LeaderboardController.getTeams);

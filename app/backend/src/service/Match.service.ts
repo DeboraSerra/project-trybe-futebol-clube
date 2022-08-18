@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import Team from '../database/models/Team.model';
 import { IMatchIndProg, IMatch, IPoints } from '../interfaces';
 import ErrorCode from '../CodeError';
@@ -31,6 +32,20 @@ class MatchService {
     } else {
       matches = await Match.findAll({ where: { inProgress: false }, raw: true });
     }
+    return matches;
+  }
+
+  static async getByTeam(id: number) {
+    const matches = await Match.findAll({
+      where: {
+        inProgress: false,
+        [Op.or]: [
+          { homeTeam: id },
+          { awayTeam: id },
+        ],
+      },
+      raw: true,
+    });
     return matches;
   }
 
