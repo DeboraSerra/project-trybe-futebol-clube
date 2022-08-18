@@ -99,8 +99,26 @@ describe('Test match route', () => {
       expect(res).to.have.status(200);
       expect(res.body).to.have.property('message', 'Finished');
       const match = await chai.request(app)
-      .get('/matches?inProgress=true')
+        .get('/matches?inProgress=true')
       expect(match.body[0].id).not.to.be.equal(id);
+    })
+  })
+  describe('PATCH /matches/:id', () => {
+    it('should update the scores', async () => {
+      const response = await chai.request(app)
+      .get('/matches?inProgress=true')
+      const id = response[0].id;
+      const res = await chai.request(app)
+        .patch(`/matches/${id}`)
+        .send({
+          "homeTeamGoals": 3,
+          "awayTeamGoals": 1,
+        });
+      expect(res).to.have.status(200);
+      const match = await chai.request(app)
+        .get('/matches?inProgress=true')
+      expect(match.body[0]).to.have.property('homeTeamGoals', 3);
+      expect(match.body[0]).to.have.property('awayTeamGoals', 1);
     })
   })
 })
