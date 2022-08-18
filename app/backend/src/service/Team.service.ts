@@ -3,7 +3,7 @@ import Team from '../database/models/Team.model';
 
 class TeamService {
   static async getAll(): Promise<ITeam[]> {
-    const response = await Team.findAll();
+    const response = await Team.findAll({ raw: true });
     return response;
   }
 

@@ -27,7 +27,7 @@ export interface ITeam {
   teamName: string;
 }
 
-export interface IMatchComplete extends IMatch {
+export interface IMatchComplete extends IMatchProg {
   teamHome: {
     teamName: string;
   };
