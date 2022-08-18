@@ -13,6 +13,8 @@ const { expect } = chai;
 
 chai.use(chaiHttp);
 
+const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
 describe('Test match route', () => {
   describe('GET /matches', () => {
     it('should return all the matches', async () => {
@@ -51,7 +53,14 @@ describe('Test match route', () => {
       })
     })
   })
-  describe('POST /matches', () => {
+  describe('POST /matches', async () => {
+    const token = await chai.request(app)
+      .post('/login')
+      .send({
+        email: 'user@user.com',
+        password: '$2a$08$Y8Abi8jXvsXyqm.rmp0B.uQBA5qUz7T6Ghlg/CvVr/gLxYj5UAZVO',
+      })
+      .then((res) => res.body.token);
     it('shouldn\'t be possible to create a match without a token', async () => {
       const response = await chai.request(app)
         .post('/matches')
@@ -64,9 +73,23 @@ describe('Test match route', () => {
       expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'Token must be a valid token');
     });
+    it('shouldn\'t be possible to create a match without an invalid token', async () => {
+      const response = await chai.request(app)
+        .post('/matches')
+        .auth(fakeToken, { type: 'bearer' })
+        .send({
+          "homeTeam": 16,
+          "awayTeam": 8,
+          "homeTeamGoals": 2,
+          "awayTeamGoals": 2
+        })
+      expect(response).to.have.status(401);
+      expect(response.body).to.have.property('message', 'Token must be a valid token');
+    });
     it('should not be possible to create a match if the home and away teams are the same', async () => {
       const response = await chai.request(app)
         .post('/matches')
+        .auth(token, { type: 'bearer' })
         .send({
           "homeTeam": 8,
           "awayTeam": 8,
@@ -79,6 +102,7 @@ describe('Test match route', () => {
     it('should not be possible to create a match if the one of the teams doesn\'t exist', async () => {
       const response = await chai.request(app)
         .post('/matches')
+        .auth(token, { type: 'bearer' })
         .send({
           "homeTeam": 20,
           "awayTeam": 8,
@@ -88,12 +112,33 @@ describe('Test match route', () => {
       expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'There is no team with such id!');
     });
+    it('should be possible to create a match', async () => {
+      const response = await chai.request(app)
+        .post('/matches')
+        .auth(token, { type: 'bearer' })
+        .send({
+          "homeTeam": 16,
+          "awayTeam": 8,
+          "homeTeamGoals": 2,
+          "awayTeamGoals": 2
+        })
+      const expected = {
+        "id": 49,
+        "homeTeam": 16,
+        "homeTeamGoals": 2,
+        "awayTeam": 8,
+        "awayTeamGoals": 2,
+        "inProgress": true,
+      }
+      expect(response).to.have.status(200);
+      expect(response.body).to.be.deep.equal(expected);
+    });
   })
   describe('PATCH /matches/:id/finish', () => {
     it('should update the inProgress key and return finished', async () => {
       const response = await chai.request(app)
         .get('/matches?inProgress=true')
-      const id = response[0].id;
+      const id = response.body[0].id;
       const res = await chai.request(app)
         .patch(`/matches/${id}/finish`);
       expect(res).to.have.status(200);
@@ -107,7 +152,7 @@ describe('Test match route', () => {
     it('should update the scores', async () => {
       const response = await chai.request(app)
       .get('/matches?inProgress=true')
-      const id = response[0].id;
+      const id = response.body[0].id;
       const res = await chai.request(app)
         .patch(`/matches/${id}`)
         .send({
