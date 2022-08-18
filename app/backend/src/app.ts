@@ -29,13 +29,14 @@ class App {
     this.app.use(express.json());
     this.app.use(accessControl);
     this.app.use(cors());
-  }
 
-  public start(PORT: string | number):void {
     this.app.use('/login', LoginRoute);
     this.app.use('/matches', MatchRoute);
     this.app.use('/teams', TeamRoute);
     this.app.use(ErrorMid);
+  }
+
+  public start(PORT: string | number):void {
     this.app.listen(PORT, () => console.log(`Running on port ${PORT}`));
   }
 }

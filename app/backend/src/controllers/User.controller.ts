@@ -24,6 +24,7 @@ class UserController {
     }
     const user = await UserService.getOne(em);
     const pass = await bcrypt.compare(password, user.password);
+    console.log({ pass, password, user: user.password });
     if (!pass) {
       throw new ErrorCode('Incorrect email or password', 400);
     }

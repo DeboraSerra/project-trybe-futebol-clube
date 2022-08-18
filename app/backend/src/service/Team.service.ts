@@ -1,5 +1,6 @@
 import { ITeam } from '../interfaces';
 import Team from '../database/models/Team.model';
+import ErrorCode from '../CodeError';
 
 class TeamService {
   static async getAll(): Promise<ITeam[]> {
@@ -9,6 +10,7 @@ class TeamService {
 
   static async getOne(id: number) {
     const response = await Team.findOne({ where: { id }, raw: true });
+    if (!response) throw new ErrorCode('Team not found', 404);
     return response;
   }
 
