@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
-import { sign, SignOptions, verify } from 'jsonwebtoken';
+import { Jwt, sign, SignOptions, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
 import UserService from '../service/User.service';
 import { IUserInd } from '../interfaces';
 import ErrorCode from '../CodeError';
 
 const secret = process.env.JWT_SECRET || 'secret';
+
+const tokenMsg = 'Token must be a valid token';
 
 class UserController {
   private static createToken(data: IUserInd) {
@@ -24,9 +26,8 @@ class UserController {
     }
     const user = await UserService.getOne(em);
     const pass = await bcrypt.compare(password, user.password);
-    console.log({ pass, password, user: user.password });
     if (!pass) {
-      throw new ErrorCode('Incorrect email or password', 400);
+      throw new ErrorCode('Incorrect email or password', 401);
     }
     const { email, username, role, id } = user;
     const token = UserController.createToken({ email, username, role, id });
@@ -35,16 +36,15 @@ class UserController {
 
   static async validate(req: Request, res: Response) {
     const auth = req.headers.authorization;
-    if (!auth) {
-      throw new Error('No token');
-    }
+    if (!auth) { throw new ErrorCode(tokenMsg, 401); }
     const token = auth.includes('Bearer') ? auth.split(' ')[1] : auth;
-    const data = verify(token, secret, { complete: true });
-    const info = Object.entries(data)[1][1].data;
-    const exists = await UserService.getOne(info.email);
-    if (!exists) {
-      throw new Error('Wrong token');
+    let data: Jwt;
+    try { data = verify(token, secret, { complete: true }) as Jwt; } catch (e) {
+      throw new ErrorCode(tokenMsg, 401);
     }
+    const info = data.payload.data.email;
+    const exists = await UserService.getOne(info);
+    if (!exists) { throw new ErrorCode(tokenMsg, 401); }
     const { password, ...user } = exists;
     res.status(200).json({ role: user.role });
   }

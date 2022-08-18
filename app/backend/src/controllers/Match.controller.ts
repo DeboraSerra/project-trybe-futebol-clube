@@ -12,11 +12,11 @@ class MatchController {
     res.status(200).json(matches);
   }
 
-  static async getOne(req: Request, res: Response) {
-    const { id } = req.params;
-    const match = await MatchService.getOne(+id);
-    res.status(200).json(match);
-  }
+  // static async getOne(req: Request, res: Response) {
+  //   const { id } = req.params;
+  //   const match = await MatchService.getOne(+id);
+  //   res.status(200).json(match);
+  // }
 
   static async finishMatch(req: Request, res: Response) {
     const { id } = req.params;

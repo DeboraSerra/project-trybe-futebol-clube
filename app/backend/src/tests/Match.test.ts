@@ -53,14 +53,8 @@ describe('Test match route', () => {
       })
     })
   })
-  describe('POST /matches', async () => {
-    const token = await chai.request(app)
-      .post('/login')
-      .send({
-        email: 'user@user.com',
-        password: '$2a$08$Y8Abi8jXvsXyqm.rmp0B.uQBA5qUz7T6Ghlg/CvVr/gLxYj5UAZVO',
-      })
-      .then((res) => res.body.token);
+  describe('POST /matches', () => {
+    let token = '';
     it('shouldn\'t be possible to create a match without a token', async () => {
       const response = await chai.request(app)
         .post('/matches')
@@ -87,6 +81,13 @@ describe('Test match route', () => {
       expect(response.body).to.have.property('message', 'Token must be a valid token');
     });
     it('should not be possible to create a match if the home and away teams are the same', async () => {
+      token = await chai.request(app)
+        .post('/login')
+        .send({
+          email: 'user@user.com',
+          password: 'secret_user',
+        })
+        .then((res) => res.body.token)
       const response = await chai.request(app)
         .post('/matches')
         .auth(token, { type: 'bearer' })
@@ -109,7 +110,7 @@ describe('Test match route', () => {
           "homeTeamGoals": 2,
           "awayTeamGoals": 2
         })
-      expect(response).to.have.status(401);
+      expect(response).to.have.status(404);
       expect(response.body).to.have.property('message', 'There is no team with such id!');
     });
     it('should be possible to create a match', async () => {
@@ -122,6 +123,11 @@ describe('Test match route', () => {
           "homeTeamGoals": 2,
           "awayTeamGoals": 2
         })
+      console.log({
+        status: response.status,
+        body: response.body,
+        text: response.text,
+      })
       const expected = {
         "id": 49,
         "homeTeam": 16,
@@ -130,7 +136,7 @@ describe('Test match route', () => {
         "awayTeamGoals": 2,
         "inProgress": true,
       }
-      expect(response).to.have.status(200);
+      expect(response).to.have.status(201);
       expect(response.body).to.be.deep.equal(expected);
     });
   })

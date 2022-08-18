@@ -10,6 +10,8 @@ chai.use(chaiHttp);
 
 const { expect } = chai;
 
+const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
 describe('Test the login route', () => {
   describe('POST /login', () => {
     let obj = {
@@ -40,11 +42,19 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'All fields must be filled');
     })
     it('returns an error if the email is wrong', async () => {
-      obj.email = '1234';
+      obj.email = 'test@test.com';
       const response = await chai.request(app)
         .post('/login')
         .send(obj);
       expect(response).to.have.status(400);
+      expect(response.body).to.have.property('message', 'Incorrect email or password');
+    })
+    it('returns an error if the email is invalid', async () => {
+      obj.email = '1234';
+      const response = await chai.request(app)
+        .post('/login')
+        .send(obj);
+      expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'Incorrect email or password');
     })
     it('returns an error if the password is wrong', async () => {
@@ -52,7 +62,7 @@ describe('Test the login route', () => {
       const response = await chai.request(app)
         .post('/login')
         .send(obj);
-      expect(response).to.have.status(400);
+      expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'Incorrect email or password');
     })
     it('returns a token if the information is correct', async () => {
@@ -61,20 +71,27 @@ describe('Test the login route', () => {
         .send(obj);
       expect(response.body).to.have.property('token');
     })
+    it('verification throws an error if the there is no token', async () => {
+      const response = await chai.request(app)
+        .get('/login/validate');
+      expect(response).to.have.status(401);
+      expect(response.body).to.have.property('message', 'Token must be a valid token');
+    })
+    it('verification throws an error if the token is invalid', async () => {
+      const response = await chai.request(app)
+        .get('/login/validate')
+        .auth(fakeToken, { type: 'bearer' });
+      expect(response).to.have.status(401);
+      expect(response.body).to.have.property('message', 'Token must be a valid token');
+    })
     it('verification returns the role', async () => {
-      sinon.stub(User, 'findOne').resolves(obj as User);
       const res = await chai.request(app)
         .post('/login')
-        .send(obj);
-      console.log({
-        status: res.status,
-        body: res.body,
-        text: res.text,
-      })
+        .send(obj)
+        .then((resp) => resp.body.token);
       const response = await chai.request(app)
-        .post('/login/verification')
-        .auth(res.body.token, { type: 'bearer' })
-        .send(obj);
+        .get('/login/validate')
+        .auth(res, { type: 'bearer' });
       expect(response.body).to.have.property('role');
     })
   })
