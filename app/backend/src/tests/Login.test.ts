@@ -5,6 +5,7 @@ import chaiHttp = require('chai-http');
 import { describe } from 'mocha';
 import { app } from '../app';
 import User from '../database/models/User.model';
+import UserMock from './mocks/Users';
 
 chai.use(chaiHttp);
 
@@ -23,9 +24,10 @@ describe('Test the login route', () => {
         email: 'user@user.com',
         password: 'secret_user',
       }
-      sinon.restore();
     })
+    afterEach(sinon.restore);
     it('returns an error if no email is passed', async () => {
+      sinon.stub(User, 'findOne').resolves();
       obj.email = '';
       const response = await chai.request(app)
         .post('/login')
@@ -34,6 +36,7 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'All fields must be filled');
     })
     it('returns an error if no password is passed', async () => {
+      sinon.stub(User, 'findOne').resolves();
       obj.password = '';
       const response = await chai.request(app)
         .post('/login')
@@ -42,14 +45,16 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'All fields must be filled');
     })
     it('returns an error if the email is wrong', async () => {
+      sinon.stub(User, 'findOne').resolves();
       obj.email = 'test@test.com';
       const response = await chai.request(app)
         .post('/login')
         .send(obj);
-      expect(response).to.have.status(400);
+      expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'Incorrect email or password');
     })
     it('returns an error if the email is invalid', async () => {
+      sinon.stub(User, 'findOne').resolves();
       obj.email = '1234';
       const response = await chai.request(app)
         .post('/login')
@@ -58,6 +63,7 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'Incorrect email or password');
     })
     it('returns an error if the password is wrong', async () => {
+      sinon.stub(User, 'findOne').resolves();
       obj.password = '1234';
       const response = await chai.request(app)
         .post('/login')
@@ -66,18 +72,21 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'Incorrect email or password');
     })
     it('returns a token if the information is correct', async () => {
+      sinon.stub(User, 'findOne').resolves(UserMock[1] as User);
       const response = await chai.request(app)
         .post('/login')
         .send(obj);
       expect(response.body).to.have.property('token');
     })
     it('verification throws an error if the there is no token', async () => {
+      sinon.stub(User, 'findOne').resolves(UserMock[1] as User);
       const response = await chai.request(app)
         .get('/login/validate');
       expect(response).to.have.status(401);
       expect(response.body).to.have.property('message', 'Token must be a valid token');
     })
     it('verification throws an error if the token is invalid', async () => {
+      sinon.stub(User, 'findOne').resolves(UserMock[1] as User);
       const response = await chai.request(app)
         .get('/login/validate')
         .auth(fakeToken, { type: 'bearer' });
@@ -85,6 +94,7 @@ describe('Test the login route', () => {
       expect(response.body).to.have.property('message', 'Token must be a valid token');
     })
     it('verification returns the role', async () => {
+      sinon.stub(User, 'findOne').resolves(UserMock[1] as User);
       const res = await chai.request(app)
         .post('/login')
         .send(obj)

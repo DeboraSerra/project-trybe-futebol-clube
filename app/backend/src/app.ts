@@ -5,6 +5,7 @@ import ErrorMid from './middlewares/error.middleware';
 import LoginRoute from './routes/Login.route';
 import TeamRoute from './routes/Team.route';
 import MatchRoute from './routes/Match.route';
+import LeaderboardRoute from './routes/Leaderboard.route';
 
 class App {
   public app: express.Express;
@@ -30,6 +31,7 @@ class App {
     this.app.use(accessControl);
     this.app.use(cors());
 
+    this.app.use('/leaderboard', LeaderboardRoute);
     this.app.use('/login', LoginRoute);
     this.app.use('/matches', MatchRoute);
     this.app.use('/teams', TeamRoute);

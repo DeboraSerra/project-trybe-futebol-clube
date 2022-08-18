@@ -7,7 +7,8 @@ import { app } from '../app';
 import Match from '../database/models/Match.model';
 import Team from '../database/models/Team.model';
 import { IMatchComplete } from '../interfaces';
-import { getAllMatchMock, getAllTeamMock, inProgressMock, notInProgressMock } from './mocks/Matches';
+import MatchesMock from './mocks/Matches';
+import TeamsMock from './mocks/Teams';
 
 const { expect } = chai;
 
@@ -17,13 +18,16 @@ const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkw
 
 describe('Test match route', () => {
   describe('GET /matches', () => {
+    afterEach(Sinon.restore);
     it('should return all the matches', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock as Match[]);
       const response = await chai.request(app)
         .get('/matches')
       expect(response).to.have.status(200);
       expect(response.body).to.be.an('array');
     });
     it('should have the team names', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock as Match[]);
       const response = await chai.request(app)
         .get('/matches')
       response.body.forEach((match: IMatchComplete) => {
@@ -34,7 +38,9 @@ describe('Test match route', () => {
     })
   })
   describe('GET /matches?inProgress', () => {
+    afterEach(Sinon.restore);
     it('should return only matches in progress if the query is true', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock.filter((match) => match.inProgress) as Match[]);
       const response = await chai.request(app)
         .get('/matches?inProgress=true')
       expect(response).to.have.status(200);
@@ -44,6 +50,7 @@ describe('Test match route', () => {
       })
     })
     it('should return only finished matches if the query is false', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock.filter((match) => !match.inProgress) as Match[]);
       const response = await chai.request(app)
         .get('/matches?inProgress=false')
       expect(response).to.have.status(200);
@@ -54,6 +61,7 @@ describe('Test match route', () => {
     })
   })
   describe('POST /matches', () => {
+    afterEach(Sinon.restore);
     let token = '';
     it('shouldn\'t be possible to create a match without a token', async () => {
       const response = await chai.request(app)
@@ -101,6 +109,9 @@ describe('Test match route', () => {
       expect(response.body).to.have.property('message', 'It is not possible to create a match with two equal teams');
     });
     it('should not be possible to create a match if the one of the teams doesn\'t exist', async () => {
+      Sinon.stub(Team, 'findOne')
+        .withArgs({ where: { id: 20 } }).resolves(undefined)
+        .withArgs({ where: { id: 8 } }).resolves(TeamsMock.find((team) => team.id === 8) as unknown as Team);
       const response = await chai.request(app)
         .post('/matches')
         .auth(token, { type: 'bearer' })
@@ -114,6 +125,17 @@ describe('Test match route', () => {
       expect(response.body).to.have.property('message', 'There is no team with such id!');
     });
     it('should be possible to create a match', async () => {
+      Sinon.stub(Team, 'findOne')
+        .withArgs({ where: { id: 16 } }).resolves(TeamsMock.find((team) => team.id === 16) as unknown as Team)
+        .withArgs({ where: { id: 8 } }).resolves(TeamsMock.find((team) => team.id === 8) as unknown as Team);
+      Sinon.stub(Match, 'create').resolves({
+        id: MatchesMock.length,
+        homeTeam: 16,
+        awayTeam: 8,
+        homeTeamGoals: 2,
+        awayTeamGoals: 2,
+        inProgress: true,
+      } as Match)
       const response = await chai.request(app)
         .post('/matches')
         .auth(token, { type: 'bearer' })
@@ -123,13 +145,8 @@ describe('Test match route', () => {
           "homeTeamGoals": 2,
           "awayTeamGoals": 2
         })
-      console.log({
-        status: response.status,
-        body: response.body,
-        text: response.text,
-      })
       const expected = {
-        "id": 49,
+        "id": 48,
         "homeTeam": 16,
         "homeTeamGoals": 2,
         "awayTeam": 8,
@@ -141,7 +158,10 @@ describe('Test match route', () => {
     });
   })
   describe('PATCH /matches/:id/finish', () => {
+    afterEach(Sinon.restore);
     it('should update the inProgress key and return finished', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock.filter((match) => match.inProgress) as Match[]);
+      Sinon.stub(Match, 'update').resolves();
       const response = await chai.request(app)
         .get('/matches?inProgress=true')
       const id = response.body[0].id;
@@ -149,13 +169,12 @@ describe('Test match route', () => {
         .patch(`/matches/${id}/finish`);
       expect(res).to.have.status(200);
       expect(res.body).to.have.property('message', 'Finished');
-      const match = await chai.request(app)
-        .get('/matches?inProgress=true')
-      expect(match.body[0].id).not.to.be.equal(id);
     })
   })
   describe('PATCH /matches/:id', () => {
     it('should update the scores', async () => {
+      Sinon.stub(Match, 'findAll').resolves(MatchesMock.filter((match) => match.inProgress) as Match[]);
+      Sinon.stub(Match, 'update').resolves();
       const response = await chai.request(app)
       .get('/matches?inProgress=true')
       const id = response.body[0].id;
@@ -166,10 +185,6 @@ describe('Test match route', () => {
           "awayTeamGoals": 1,
         });
       expect(res).to.have.status(200);
-      const match = await chai.request(app)
-        .get('/matches?inProgress=true')
-      expect(match.body[0]).to.have.property('homeTeamGoals', 3);
-      expect(match.body[0]).to.have.property('awayTeamGoals', 1);
     })
   })
 })

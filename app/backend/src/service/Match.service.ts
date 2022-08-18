@@ -24,6 +24,16 @@ class MatchService {
     return response;
   }
 
+  static async getByTeamId(id: number, type = '') {
+    let matches: IMatchIndProg[];
+    if (type) {
+      matches = await Match.findAll({ where: { [type]: id, inProgress: false }, raw: true });
+    } else {
+      matches = await Match.findAll({ where: { inProgress: false }, raw: true });
+    }
+    return matches;
+  }
+
   // static async getOne(id: number) {
   //   const match = await Match.findOne({ where: { id } });
   //   if (!match) {
